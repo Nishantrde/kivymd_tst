@@ -22,7 +22,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # 3. Download & unpack the Android command-line tools
+      # 3. Download & unpack Android command-line tools
       - name: Install Android SDK command-line tools
         run: |
           export ANDROID_SDK_ROOT=$HOME/Android/Sdk
@@ -30,12 +30,11 @@ jobs:
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip \
             -O cmdline-tools.zip
           unzip -q cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools
-          # move the nested 'cmdline-tools' folder into 'latest'
           mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools \
              $ANDROID_SDK_ROOT/cmdline-tools/latest
           rm cmdline-tools.zip
 
-      # 4. Use the precise sdkmanager binary to install aidl, aapt, etc.
+      # 4. Install platform-tools, build-tools (with aidl), & platforms
       - name: Install Android SDK packages
         run: |
           export ANDROID_SDK_ROOT=$HOME/Android/Sdk
@@ -45,17 +44,21 @@ jobs:
             "build-tools;30.0.3" \
             "platforms;android-33"
 
-      # 5. Expose SDK & tools on the PATH
+      # 5. Expose SDK & tools on PATH
       - name: Configure Android environment
         run: |
-          # Set ANDROID_SDK_ROOT environment variable
           echo "ANDROID_SDK_ROOT=$HOME/Android/Sdk" >> $GITHUB_ENV
-          # Make aidl, aapt, adb, etc. available
           echo "$HOME/Android/Sdk/platform-tools" >> $GITHUB_PATH
           echo "$HOME/Android/Sdk/build-tools/30.0.3" >> $GITHUB_PATH
           echo "$HOME/Android/Sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
-      # 6. Python & Buildozer (with Cython)
+      # 6. Link your SDK into Buildozer’s default location
+      - name: Link Android SDK for Buildozer
+        run: |
+          mkdir -p ~/.buildozer/android/platform
+          ln -sf $HOME/Android/Sdk ~/.buildozer/android/platform/android-sdk
+
+      # 7. Set up Python & install Buildozer + Cython
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
@@ -65,14 +68,13 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install buildozer Cython
 
-      # 7. Build the APK
+      # 8. Build the debug APK
       - name: Build Debug APK
         run: |
-          # If you need a buildozer.spec, uncomment:
-          # buildozer init
+          # buildozer init   # <- uncomment if you don’t have buildozer.spec yet
           buildozer -v android debug
 
-      # 8. Upload the APK artifact
+      # 9. Upload the APK artifact
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
