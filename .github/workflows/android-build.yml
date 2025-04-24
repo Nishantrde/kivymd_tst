@@ -15,32 +15,40 @@ jobs:
       # 1. Check out your code
       - uses: actions/checkout@v3
 
-      # 2. Use JDK 17 so sdkmanager (cmdline-tools v16+) runs without error
+      # 2. Install JDK 17 for sdkmanager
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: '17'
 
-      # 3. Install Android SDK cmdline-tools + platform-tools + build-tools & platform
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          # folded scalar (!!) ensures three separate args,
-          # installing aidl via build-tools;30.0.3  :contentReference[oaicite:0]{index=0}
-          packages: >
-            platform-tools
-            build-tools;30.0.3
-            platforms;android-33
-          accept-android-sdk-licenses: true
-
-      # 4. Add the Android tool dirs to PATH so `aidl` is found :contentReference[oaicite:1]{index=1}
-      - name: Add Android tools to PATH
+      # 3. Download & unpack Android command-line tools
+      - name: Install Android SDK command-line tools
         run: |
-          echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
-          echo "$ANDROID_SDK_ROOT/build-tools/30.0.3" >> $GITHUB_PATH
+          mkdir -p $HOME/Android/Sdk/cmdline-tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip -q cmdline-tools.zip -d $HOME/Android/Sdk/cmdline-tools/latest
+          rm cmdline-tools.zip
 
-      # 5. Set up Python & Buildozer (with Cython)
+      # 4. Install platform-tools, build-tools (with aidl), and a platform
+      - name: Install Android SDK packages
+        env:
+          ANDROID_SDK_ROOT: ${{ runner.home }}/Android/Sdk
+        run: |
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/cmdline-tools/bin/sdkmanager \
+            --sdk_root=$ANDROID_SDK_ROOT \
+            "platform-tools" \
+            "build-tools;30.0.3" \
+            "platforms;android-33"
+
+      # 5. Export SDK root and add tools to PATH
+      - name: Configure Android environment
+        run: |
+          echo "ANDROID_SDK_ROOT=${{ runner.home }}/Android/Sdk" >> $GITHUB_ENV
+          echo "${{ runner.home }}/Android/Sdk/platform-tools" >> $GITHUB_PATH
+          echo "${{ runner.home }}/Android/Sdk/build-tools/30.0.3" >> $GITHUB_PATH
+
+      # 6. Set up Python & install Buildozer + Cython
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
@@ -50,14 +58,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install buildozer Cython
 
-      # 6. Build the debug APK
+      # 7. Build the debug APK
       - name: Build Debug APK
         run: |
-          # Uncomment once if you need to generate buildozer.spec:
+          # Uncomment if you haven’t yet generated buildozer.spec:
           # buildozer init
           buildozer -v android debug
 
-      # 7. Upload the APK artifact
+      # 8. Upload the APK artifact
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
