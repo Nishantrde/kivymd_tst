@@ -15,40 +15,41 @@ jobs:
       # 1. Check out your code
       - uses: actions/checkout@v3
 
-      # 2. Install a JDK (Buildozer needs Java for Android tooling)
-      - name: Set up JDK 11
+      # 2. Install JDK 17 (required by the Android command-line tools)
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: '11'
+          java-version: '17'
 
       # 3. Install Android SDK command-line tools, platform-tools, build-tools & a platform
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          # installs sdkmanager, aapt, aidl, etc.
           packages: |
             platform-tools
             build-tools;33.0.2
             platforms;android-33
-          accept-android-sdk-licenses: true   # auto-accept licenses :contentReference[oaicite:0]{index=0}
+          accept-android-sdk-licenses: true
 
-      # 4. Install Python and Buildozer (plus Cython so it’s detected)
-      - name: Set up Python & Buildozer
+      # 4. Set up Python & Buildozer (with Cython)
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - run: |
-          python -m pip install --upgrade pip buildozer Cython
+      - name: Install Buildozer & Cython
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install buildozer Cython
 
       # 5. Build the debug APK
       - name: Build Debug APK
         run: |
-          # Uncomment if this is your first run and you don’t have buildozer.spec yet:
+          # If you haven’t yet created a buildozer.spec, uncomment:
           # buildozer init
           buildozer -v android debug
 
-      # 6. Upload the APK for download
+      # 6. Upload the APK artifact
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
