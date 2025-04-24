@@ -1,28 +1,49 @@
-name: Android build
+# .github/workflows/android-build.yml
+name: Android CI
 
+# Trigger on pushes and PRs to main
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build-apk:
-    runs-on: ubuntu-latest
+    name: Build and Upload APK
+    runs-on: ubuntu-24.04
+
     steps:
+      # 1. Check out your code
       - uses: actions/checkout@v3
+
+      # 2. Set up Python 3.10
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: Install dependencies
+
+      # 3. Install Buildozer & Android toolchain deps
+      - name: Install Build Dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential git openjdk-11-jdk unzip zlib1g-dev libffi-dev libssl-dev
+          sudo apt install -y \
+            build-essential git openjdk-11-jdk unzip zlib1g-dev \
+            libffi-dev libssl-dev
           python -m pip install --upgrade pip buildozer
-      - name: Build APK
+
+      # 4. Initialize (if needed) and build your APK
+      - name: Build Debug APK
         run: |
+          # if you haven't run `buildozer init` yet, uncomment:
+          # buildozer init
           buildozer -v android debug
-      - name: Upload APK
-        uses: actions/upload-artifact@v3
+
+      # 5. Upload the resulting APK(s)
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: myapp-apk
+          name: myapp-debug-apk
           path: bin/*.apk
