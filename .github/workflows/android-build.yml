@@ -25,19 +25,19 @@ jobs:
         with:
           python-version: '3.10'
 
-      # 3. Install Buildozer & Android toolchain deps
+      # 3. Install Buildozer, Cython & Android toolchain deps
       - name: Install Build Dependencies
         run: |
           sudo apt update
           sudo apt install -y \
             build-essential git openjdk-11-jdk unzip zlib1g-dev \
             libffi-dev libssl-dev
-          python -m pip install --upgrade pip buildozer
+          python -m pip install --upgrade pip buildozer Cython
 
-      # 4. Initialize (if needed) and build your APK
+      # 4. Build your APK
       - name: Build Debug APK
         run: |
-          # if you haven't run `buildozer init` yet, uncomment:
+          # If this is the first time, ensure you have a buildozer.spec:
           # buildozer init
           buildozer -v android debug
 
