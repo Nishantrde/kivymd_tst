@@ -1,10 +1,11 @@
+# main.py
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.label import MDLabel
 
 class MainApp(MDApp):
     def build(self):
-        # Optional: ensure your app uses a dark background
+        # Use Dark theme with Blue primary palette
         self.theme_cls.theme_style = "Dark"
         self.theme_cls.primary_palette = "Blue"
 
@@ -15,7 +16,7 @@ class MainApp(MDApp):
                 halign="center",
                 size_hint_y=0.1,
                 pos_hint={"center_y": 0.5},
-                # ← HERE we switch to “Custom” and set pure white:
+                # Use a custom (pure white) text color
                 theme_text_color="Custom",
                 text_color=(1, 1, 1, 1),
             )
