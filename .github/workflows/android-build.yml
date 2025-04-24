@@ -1,0 +1,28 @@
+name: Android build
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential git openjdk-11-jdk unzip zlib1g-dev libffi-dev libssl-dev
+          python -m pip install --upgrade pip buildozer
+      - name: Build APK
+        run: |
+          buildozer -v android debug
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: myapp-apk
+          path: bin/*.apk
